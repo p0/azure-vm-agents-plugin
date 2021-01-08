@@ -15,6 +15,7 @@
  */
 package com.microsoft.azure.vmagent.remote;
 
+import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserPrivateKey;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.jcraft.jsch.*;
 import com.microsoft.azure.management.compute.OperatingSystemTypes;
@@ -24,6 +25,7 @@ import com.microsoft.azure.vmagent.AzureVMAgentTemplate;
 import com.microsoft.azure.vmagent.AzureVMCloud;
 import com.microsoft.azure.vmagent.AzureVMComputer;
 import com.microsoft.azure.vmagent.Messages;
+import com.microsoft.azure.vmagent.exceptions.AzureCloudException;
 import com.microsoft.azure.vmagent.util.AzureUtil;
 import com.microsoft.azure.vmagent.util.CleanUpAction;
 import com.microsoft.azure.vmagent.util.Constants;
@@ -34,6 +36,7 @@ import hudson.remoting.Channel;
 import hudson.remoting.Channel.Listener;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.SlaveComputer;
+import hudson.util.Secret;
 import jenkins.model.Jenkins;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -292,15 +295,40 @@ public class AzureVMAgentSSHLauncher extends ComputerLauncher {
         }
     }
 
-    private Session getRemoteSession(String userName, String password, String dnsName, int sshPort) throws JSchException {
+    private Session getRemoteSession(AzureVMAgent agent) throws AzureCloudException, JSchException {
+        String dnsName = agent.getPublicDNSName();
+        int sshPort = agent.getSshPort();
+        JSch remoteClient = new JSch();
+        String userName = null;
+        String password = null;
+
+        // Try SSH key auth first
+        if (agent.getSshPrivateKey() != null) {
+            SSHUserPrivateKey privateKey = AzureUtil.getCredentials(SSHUserPrivateKey.class, agent.getSshPrivateKey());
+            userName = privateKey.getUsername();
+            Secret passphrase = privateKey.getPassphrase();
+            for (String key : privateKey.getPrivateKeys()) {
+                remoteClient.addIdentity(key, passphrase == null ? null : passphrase.getPlainText());
+            }
+        } else {
+            // Grab the username/pass
+            StandardUsernamePasswordCredentials creds = AzureUtil.getCredentials(agent.getVMCredentialsId());
+            userName = creds.getUsername();
+            password = creds.getPassword().getPlainText();
+        }
+
         LOGGER.log(Level.INFO,
                 "AzureVMAgentSSHLauncher: getRemoteSession: getting remote session for user {0} to host {1}:{2}",
                 new Object[]{userName, dnsName, sshPort});
-        JSch remoteClient = new JSch();
         try {
             final Session session = remoteClient.getSession(userName, dnsName, sshPort);
             session.setConfig("StrictHostKeyChecking", "no");
-            session.setPassword(password);
+            if (agent.getSshPrivateKey() != null) {
+                remoteClient.addIdentity(agent.getSshPrivateKey(), agent.getSshPassPhrase());
+            }
+            if (password != null) {
+                session.setPassword(password);
+            }
             // pinging server for every 1 minutes to keep the connection alive
             final int serverAliveIntervalInMillis = 60 * 1000;
             session.setServerAliveInterval(serverAliveIntervalInMillis);
@@ -459,14 +487,7 @@ public class AzureVMAgentSSHLauncher extends ComputerLauncher {
         while (true) {
             currRetryCount++;
             try {
-                // Grab the username/pass
-                StandardUsernamePasswordCredentials creds = AzureUtil.getCredentials(agent.getVMCredentialsId());
-
-                session = getRemoteSession(
-                        creds.getUsername(),
-                        creds.getPassword().getPlainText(),
-                        agent.getPublicDNSName(),
-                        agent.getSshPort());
+                session = getRemoteSession(agent);
                 LOGGER.info("AzureVMAgentSSHLauncher: connectToSsh: Got remote connection");
             } catch (Exception e) {
                 // Retry till max count and throw exception if not successful even after that

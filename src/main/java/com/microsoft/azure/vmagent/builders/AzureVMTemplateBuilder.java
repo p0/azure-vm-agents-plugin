@@ -30,6 +30,7 @@ public class AzureVMTemplateBuilder extends AzureVMTemplateFluent<AzureVMTemplat
         fluent.withOsDiskSize(template.getOsDiskSize());
         fluent.withRetentionStrategy((AzureVMCloudBaseRetentionStrategy) template.getRetentionStrategy());
         fluent.withUsageMode(template.getUsageMode());
+        fluent.withSshCredential(template.getSshCredentialsId());
         fluent.withAdminCredential(template.getCredentialsId());
         fluent.withWorkspace(template.getAgentWorkspace());
         fluent.withShutdownOnIdle(template.isShutdownOnIdle());
@@ -63,6 +64,7 @@ public class AzureVMTemplateBuilder extends AzureVMTemplateFluent<AzureVMTemplat
         fluent.withOsDiskSize(template.getOsDiskSize());
         fluent.withRetentionStrategy((AzureVMCloudBaseRetentionStrategy) template.getRetentionStrategy());
         fluent.withUsageMode(template.getUsageMode());
+        fluent.withSshCredential(template.getSshCredentialsId());
         fluent.withAdminCredential(template.getCredentialsId());
         fluent.withWorkspace(template.getAgentWorkspace());
         fluent.withShutdownOnIdle(template.isShutdownOnIdle());
@@ -112,7 +114,8 @@ public class AzureVMTemplateBuilder extends AzureVMTemplateFluent<AzureVMTemplat
                 fluent.getAdvancedImage().isPreInstallSsh(),
                 fluent.getAdvancedImage().getInitScript(),
                 fluent.getAdvancedImage().getTerminateScript(),
-                fluent.getCredentialsId(),
+                fluent.getSshCredentialsId(),
+                fluent.getAdminCredentialsId(),
                 fluent.getAdvancedImage().getVirtualNetworkName(),
                 fluent.getAdvancedImage().getVirtualNetworkResourceGroupName(),
                 fluent.getAdvancedImage().getSubnetName(),

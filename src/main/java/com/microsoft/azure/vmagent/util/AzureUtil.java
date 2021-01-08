@@ -15,6 +15,7 @@
  */
 package com.microsoft.azure.vmagent.util;
 
+import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
@@ -392,10 +393,15 @@ public final class AzureUtil {
     }
 
     public static StandardUsernamePasswordCredentials getCredentials(String credentialsId) throws AzureCloudException {
+        return getCredentials(StandardUsernamePasswordCredentials.class, credentialsId);
+    }
+
+    public static <C extends Credentials> C getCredentials(Class<C> expected, String credentialsId)
+            throws AzureCloudException {
         // Grab the pass
-        StandardUsernamePasswordCredentials creds = CredentialsMatchers.firstOrNull(
+        C creds = CredentialsMatchers.firstOrNull(
                 CredentialsProvider.lookupCredentials(
-                        StandardUsernamePasswordCredentials.class,
+                        expected,
                         Jenkins.getInstance(),
                         ACL.SYSTEM,
                         Collections.<DomainRequirement>emptyList()),

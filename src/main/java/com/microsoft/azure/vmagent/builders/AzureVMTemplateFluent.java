@@ -47,6 +47,7 @@ public class AzureVMTemplateFluent<T extends AzureVMTemplateFluent<T>> {
 
     private AdvancedImage advancedImage;
 
+    private String sshCredentialsId;
     private String credentialsId;
 
     public AzureVMTemplateFluent() {
@@ -187,6 +188,11 @@ public class AzureVMTemplateFluent<T extends AzureVMTemplateFluent<T>> {
         return new AdvancedImageNested(image);
     }
 
+    public T withSshCredential(String sshCredentailId) {
+        this.sshCredentialsId = sshCredentailId;
+        return (T) this;
+    }
+
     public T withAdminCredential(String credentialsId) {
         this.credentialsId = credentialsId;
         return (T) this;
@@ -273,7 +279,19 @@ public class AzureVMTemplateFluent<T extends AzureVMTemplateFluent<T>> {
         return advancedImage;
     }
 
+    public String getSshCredentialsId() {
+        return sshCredentialsId;
+    }
+
+    /**
+     * Use either {@link #getAdminCredentialsId()} instead.
+     */
+    @Deprecated
     public String getCredentialsId() {
+        return getAdminCredentialsId();
+    }
+
+    public String getAdminCredentialsId() {
         return credentialsId;
     }
 

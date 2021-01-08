@@ -257,6 +257,11 @@
         </f:section>
 
         <f:section title="${%Admin_Credentials}">
+            <f:entry title="${%SSH_Credentials}" field="sshCredentialsId"
+                     help="/plugin/azure-vm-agents/help-ssh-credentials.html">
+                <c:select expressionAllowed="false"/>
+            </f:entry>
+
             <f:entry title="${%Admin_Credentials}" field="credentialsId"
                      help="/plugin/azure-vm-agents/help-credentials.html">
                 <c:select expressionAllowed="false"/>

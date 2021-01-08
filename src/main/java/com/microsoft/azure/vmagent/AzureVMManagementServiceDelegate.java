@@ -15,6 +15,7 @@
  */
 package com.microsoft.azure.vmagent;
 
+import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserPrivateKey;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -1019,7 +1020,7 @@ public final class AzureVMManagementServiceDelegate {
                     template.getLabels(),
                     template.retrieveAzureCloudReference().getDisplayName(),
                     template.getCredentialsId(),
-                    null,
+                    template.getSshCredentialsId(),
                     null,
                     (String) properties.get("jvmOptions"),
                     template.isShutdownOnIdle(),

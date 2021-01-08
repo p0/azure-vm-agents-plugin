@@ -15,7 +15,9 @@
  */
 package com.microsoft.azure.vmagent;
 
+import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserPrivateKey;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
@@ -290,6 +292,8 @@ public class AzureVMAgentTemplate implements Describable<AzureVMAgentTemplate>, 
 
     private final String terminateScript;
 
+    private final String sshCredentialsId;
+
     private final String credentialsId;
 
     private final String agentWorkspace;
@@ -385,6 +389,7 @@ public class AzureVMAgentTemplate implements Describable<AzureVMAgentTemplate>, 
             boolean preInstallSsh,
             String initScript,
             String terminateScript,
+            String sshCredentialsId,
             String credentialsId,
             String virtualNetworkName,
             String virtualNetworkResourceGroupName,
@@ -443,6 +448,7 @@ public class AzureVMAgentTemplate implements Describable<AzureVMAgentTemplate>, 
         this.terminateScript = terminateScript;
         this.agentLaunchMethod = agentLaunchMethod;
         this.preInstallSsh = preInstallSsh;
+        this.sshCredentialsId = sshCredentialsId;
         this.credentialsId = credentialsId;
         this.virtualNetworkName = virtualNetworkName;
         this.virtualNetworkResourceGroupName = virtualNetworkResourceGroupName;
@@ -953,6 +959,10 @@ public class AzureVMAgentTemplate implements Describable<AzureVMAgentTemplate>, 
         return terminateScript;
     }
 
+    public String getSshCredentialsId() {
+        return sshCredentialsId;
+    }
+
     public String getCredentialsId() {
         return credentialsId;
     }
@@ -1275,13 +1285,20 @@ public class AzureVMAgentTemplate implements Describable<AzureVMAgentTemplate>, 
             return model;
         }
 
+        public ListBoxModel doFillSshCredentialsIdItems(@AncestorInPath Item owner) {
+            return getListBoxModelFor(SSHUserPrivateKey.class, owner);
+        }
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item owner) {
+            return getListBoxModelFor(StandardUsernamePasswordCredentials.class, owner);
+        }
+
+        private <C extends StandardCredentials> ListBoxModel getListBoxModelFor(Class<C> expectedClass, Item owner) {
             // when configuring the job, you only want those credentials that are available to ACL.SYSTEM selectable
             // as we cannot select from a user's credentials unless they are the only user submitting the build
             // (which we cannot assume) thus ACL.SYSTEM is correct here.
             return new StandardListBoxModel().withAll(
                     CredentialsProvider.lookupCredentials(
-                            StandardUsernamePasswordCredentials.class,
+                            expectedClass,
                             owner,
                             ACL.SYSTEM,
                             Collections.<DomainRequirement>emptyList()));
