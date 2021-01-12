@@ -307,8 +307,16 @@ public class AzureVMAgentSSHLauncher extends ComputerLauncher {
             SSHUserPrivateKey privateKey = AzureUtil.getCredentials(SSHUserPrivateKey.class, agent.getSshPrivateKey());
             userName = privateKey.getUsername();
             Secret passphrase = privateKey.getPassphrase();
+            int n = 0;
             for (String key : privateKey.getPrivateKeys()) {
-                remoteClient.addIdentity(key, passphrase == null ? null : passphrase.getPlainText());
+                String name = agent.getSshPrivateKey();
+                if (n > 0)
+                    name += "-" + n;
+                // For the key, ASCII should be enough. The passphrase is assumed to be UTF-8.
+                remoteClient.addIdentity(name,
+                    key.getBytes(StandardCharsets.US_ASCII),
+                    null,
+                    passphrase == null ? null : passphrase.getPlainText().getBytes(StandardCharsets.UTF_8));
             }
         } else {
             // Grab the username/pass
