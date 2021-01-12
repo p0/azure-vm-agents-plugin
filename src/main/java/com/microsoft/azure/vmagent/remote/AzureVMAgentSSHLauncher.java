@@ -331,9 +331,6 @@ public class AzureVMAgentSSHLauncher extends ComputerLauncher {
         try {
             final Session session = remoteClient.getSession(userName, dnsName, sshPort);
             session.setConfig("StrictHostKeyChecking", "no");
-            if (agent.getSshPrivateKey() != null) {
-                remoteClient.addIdentity(agent.getSshPrivateKey(), agent.getSshPassPhrase());
-            }
             if (password != null) {
                 session.setPassword(password);
             }
